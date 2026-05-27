@@ -15,12 +15,30 @@ export interface NormalizedIdentity {
 
 export interface Candidate {
   id: string;
+  created_at: string;
+  updated_at: string;
   identity: NormalizedIdentity;
   source: string;
   status: string;
   promoted_employee_id?: string | null;
   metadata: Record<string, unknown>;
 }
+
+export interface ResumeUploadResponse {
+  candidate: Candidate;
+  extraction: {
+    source_file?: string | null;
+    model?: string | null;
+    input_tokens?: number | null;
+    output_tokens?: number | null;
+    cost_usd?: number | null;
+    latency_s?: number | null;
+    raw_llm_response?: Record<string, unknown>;
+    refined?: Record<string, unknown>;
+  };
+}
+
+export type ResumeExtractionHistoryItem = ResumeUploadResponse;
 
 export interface Finding {
   source: string;
@@ -84,6 +102,8 @@ export interface SeedResponse {
 
 export interface VendorExecution {
   id: string;
+  created_at?: string;
+  updated_at?: string;
   run_id: string;
   payload_run_id: string;
   vendor: string;

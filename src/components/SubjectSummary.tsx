@@ -12,12 +12,12 @@ export function SubjectSummary({ result, candidates }: SubjectSummaryProps) {
   return (
     <div className="card subject-card">
       <div>
-        <div className="eyebrow">Selected Subject</div>
+        <div className="eyebrow">Result Subject</div>
         <h2 className="subject-name">{candidate?.identity.full_name ?? result?.entity_id ?? "No subject selected"}</h2>
         <div className="subject-meta">
           {candidate
             ? `DOB: ${candidate.identity.date_of_birth ?? "-"} | Nationality: ${candidate.identity.nationality ?? "-"}`
-            : "Run screening to load results."}
+            : "Run vendor tests from Resume Intake, then select a result."}
         </div>
       </div>
       <div className={`risk-box ${result ? riskClass(result.risk_level) : ""}`}>

@@ -9,7 +9,7 @@ export function Header({ apiBaseUrl, onApiBaseUrlChange, onSave }: HeaderProps) 
     <header className="header">
       <div className="brand-lockup">
         <img className="brand-logo" src="/truuth-logo.png" alt="truuth" />
-        <div className="brand-subtitle">Screening Dashboard Demo</div>
+        <div className="brand-subtitle">Screening Dashboard</div>
       </div>
       <div className="api-control">
         <label htmlFor="apiBase">API</label>

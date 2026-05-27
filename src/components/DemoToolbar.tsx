@@ -1,3 +1,5 @@
+import { DEMO_MODE } from "./viewTypes";
+
 interface DemoToolbarProps {
   isBusy: boolean;
   onSeed: () => void;
@@ -9,6 +11,16 @@ interface DemoToolbarProps {
 }
 
 export function DemoToolbar({ isBusy, onSeed, onRun, onRunSingle, onSchedule, onWebhook, onReset }: DemoToolbarProps) {
+  if (DEMO_MODE) {
+    return (
+      <div className="toolbar">
+        <button className="btn" type="button" onClick={onReset} disabled={isBusy}>
+          Reset Session
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="toolbar">
       <button className="btn primary" type="button" onClick={onSeed} disabled={isBusy}>

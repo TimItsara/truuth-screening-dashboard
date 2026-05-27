@@ -37,7 +37,7 @@ def main() -> None:
         "Reset Demo",
         "Run Single Test",
         "listVendors",
-        "Request verification",
+        "Result Detail",
         "activeView",
         "onViewChange",
         "function ActiveView",

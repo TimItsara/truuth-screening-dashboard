@@ -2,6 +2,8 @@ import type {
   Candidate,
   DashboardRun,
   ReviewAction,
+  ResumeExtractionHistoryItem,
+  ResumeUploadResponse,
   Schedule,
   ScheduleTriggerResponse,
   SeedResponse,
@@ -46,6 +48,26 @@ export class ApiClient {
     return this.request<Candidate[]>("/candidates");
   }
 
+  listResumeExtractions(): Promise<ResumeExtractionHistoryItem[]> {
+    return this.request<ResumeExtractionHistoryItem[]>("/candidates/resume-extractions");
+  }
+
+  async uploadResume(file: File): Promise<ResumeUploadResponse> {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await fetch(this.url("/candidates/resume-upload"), {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`${response.status} ${response.statusText}: ${body}`);
+    }
+
+    return response.json() as Promise<ResumeUploadResponse>;
+  }
+
   listVendors(): Promise<VendorConfigResponse> {
     return this.request<VendorConfigResponse>("/vendors");
   }
@@ -63,6 +85,10 @@ export class ApiClient {
 
   getDashboardRun(runId: string): Promise<DashboardRun> {
     return this.request<DashboardRun>(`/dashboard/runs/${runId}`);
+  }
+
+  listDashboardRuns(): Promise<DashboardRun[]> {
+    return this.request<DashboardRun[]>("/dashboard/runs");
   }
 
   listVendorExecutions(): Promise<VendorExecution[]> {

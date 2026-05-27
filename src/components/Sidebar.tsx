@@ -1,6 +1,4 @@
-import { type AppView, viewLabels } from "./viewTypes";
-
-const items: AppView[] = ["home", "subjects", "review", "pep", "reports", "providers"];
+import { type AppView, viewLabels, visibleViews } from "./viewTypes";
 
 interface SidebarProps {
   activeView: AppView;
@@ -11,7 +9,7 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
   return (
     <aside className="sidebar">
       <nav>
-        {items.map((item) => (
+        {visibleViews.map((item) => (
           <button
             key={item}
             className={`nav-item ${item === activeView ? "active" : ""}`}
