@@ -93,6 +93,16 @@ export interface VendorExecution {
   raw_response: Record<string, unknown>;
 }
 
+export interface VendorConfig {
+  name: string;
+  screening_type: string;
+  mode: "mock" | "live" | string;
+}
+
+export interface VendorConfigResponse {
+  vendors: VendorConfig[];
+}
+
 export interface TaskRun {
   id: string;
   task_type: string;

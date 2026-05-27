@@ -6,6 +6,7 @@ import type {
   ScheduleTriggerResponse,
   SeedResponse,
   TaskRun,
+  VendorConfigResponse,
   VendorExecution,
 } from "./types";
 
@@ -43,6 +44,10 @@ export class ApiClient {
 
   listCandidates(): Promise<Candidate[]> {
     return this.request<Candidate[]>("/candidates");
+  }
+
+  listVendors(): Promise<VendorConfigResponse> {
+    return this.request<VendorConfigResponse>("/vendors");
   }
 
   runScreening(candidateIds: string[]): Promise<{ id: string; batch_id?: string | null; status: string }> {

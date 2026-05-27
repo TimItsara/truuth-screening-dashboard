@@ -1,7 +1,15 @@
 import { useMemo, useState } from "react";
 import { ApiClient } from "./api/client";
 import { loadApiBaseUrl, saveApiBaseUrl } from "./api/storage";
-import type { Candidate, DashboardRun, ReviewAction, ScreeningResult, TaskRun, VendorExecution } from "./api/types";
+import type {
+  Candidate,
+  DashboardRun,
+  ReviewAction,
+  ScreeningResult,
+  TaskRun,
+  VendorConfig,
+  VendorExecution,
+} from "./api/types";
 import { ActiveView } from "./components/Views";
 import { DemoToolbar } from "./components/DemoToolbar";
 import { Header } from "./components/Header";
@@ -25,6 +33,7 @@ export function App() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [dashboard, setDashboard] = useState<DashboardRun | null>(null);
   const [selectedResult, setSelectedResult] = useState<ScreeningResult | null>(null);
+  const [vendors, setVendors] = useState<VendorConfig[]>([]);
   const [vendorExecutions, setVendorExecutions] = useState<VendorExecution[]>([]);
   const [tasks, setTasks] = useState<TaskRun[]>([]);
   const [activeView, setActiveView] = useState<AppView>("review");
@@ -47,13 +56,38 @@ export function App() {
   }
 
   async function refreshOps() {
-    const [executions, taskRuns] = await Promise.all([
+    const [vendorConfig, executions, taskRuns] = await Promise.all([
+      api.listVendors(),
       api.listVendorExecutions(),
       api.listTasks(),
     ]);
+    setVendors(vendorConfig.vendors);
     setVendorExecutions(executions);
     setTasks(taskRuns);
-    return { executions, taskRuns };
+    return { vendors: vendorConfig.vendors, executions, taskRuns };
+  }
+
+  async function ensureCandidates(): Promise<Candidate[]> {
+    if (candidates.length > 0) {
+      return candidates;
+    }
+    updateStatus("No candidates loaded. Seeding first...");
+    const seed = await api.seed();
+    setCandidates(seed.candidates);
+    return seed.candidates;
+  }
+
+  async function completeScreening(candidateIds: string[], label: string) {
+    updateStatus(`Running ${label} with configured providers...`);
+    const run = await api.runScreening(candidateIds);
+    const nextDashboard = await api.getDashboardRun(run.id);
+    const firstInteresting =
+      nextDashboard.results.find((result) => result.findings.length > 0) ?? nextDashboard.results[0] ?? null;
+
+    setDashboard(nextDashboard);
+    setSelectedResult(firstInteresting);
+    await refreshOps();
+    updateStatus(`${label} completed with status ${nextDashboard.run.status}.`, "success");
   }
 
   async function seedData() {
@@ -61,6 +95,7 @@ export function App() {
       updateStatus("Seeding demo candidates...");
       const seed = await api.seed();
       setCandidates(seed.candidates);
+      await refreshOps();
       updateStatus(`Seeded ${seed.candidate_count} candidates.`, "success");
     });
   }
@@ -74,30 +109,26 @@ export function App() {
       setSelectedResult(null);
       setVendorExecutions([]);
       setTasks([]);
+      await refreshOps();
       updateStatus(`Demo reset complete with ${seed.candidate_count} seeded candidates.`, "success");
     });
   }
 
   async function runScreening() {
     await runAction(async () => {
-      let subjectCandidates = candidates;
-      if (subjectCandidates.length === 0) {
-        updateStatus("No candidates loaded. Seeding first...");
-        const seed = await api.seed();
-        subjectCandidates = seed.candidates;
-        setCandidates(seed.candidates);
+      const subjectCandidates = await ensureCandidates();
+      await completeScreening(subjectCandidates.slice(0, 6).map((candidate) => candidate.id), "Screening run");
+    });
+  }
+
+  async function runSingleTest() {
+    await runAction(async () => {
+      const subjectCandidates = await ensureCandidates();
+      const candidate = subjectCandidates[0];
+      if (!candidate) {
+        throw new Error("No candidate available for single test.");
       }
-
-      updateStatus("Running screening with mock vendors...");
-      const run = await api.runScreening(subjectCandidates.slice(0, 6).map((candidate) => candidate.id));
-      const nextDashboard = await api.getDashboardRun(run.id);
-      const firstInteresting =
-        nextDashboard.results.find((result) => result.findings.length > 0) ?? nextDashboard.results[0] ?? null;
-
-      setDashboard(nextDashboard);
-      setSelectedResult(firstInteresting);
-      await refreshOps();
-      updateStatus(`Screening completed with status ${nextDashboard.run.status}.`, "success");
+      await completeScreening([candidate.id], `Single test for ${candidate.identity.full_name}`);
     });
   }
 
@@ -113,7 +144,10 @@ export function App() {
   async function simulateWebhook() {
     await runAction(async () => {
       const { executions } = vendorExecutions.length ? { executions: vendorExecutions } : await refreshOps();
-      const execution = executions[0];
+      const currentRunExecutions = dashboard
+        ? executions.filter((item) => item.run_id === dashboard.run.id)
+        : [];
+      const execution = currentRunExecutions[0] ?? executions[0];
       if (!execution) {
         throw new Error("No vendor execution available. Run screening first.");
       }
@@ -161,6 +195,7 @@ export function App() {
               isBusy={isBusy}
               onSeed={seedData}
               onRun={runScreening}
+              onRunSingle={runSingleTest}
               onSchedule={triggerSchedule}
               onWebhook={simulateWebhook}
               onReset={resetDemo}
@@ -174,10 +209,12 @@ export function App() {
             candidates={candidates}
             dashboard={dashboard}
             selectedResult={selectedResult}
+            vendors={vendors}
             vendorExecutions={vendorExecutions}
             tasks={tasks}
             onSelectResult={setSelectedResult}
             onRunScreening={runScreening}
+            onRunSingleTest={runSingleTest}
             onSeed={seedData}
             onSchedule={triggerSchedule}
             onWebhook={simulateWebhook}

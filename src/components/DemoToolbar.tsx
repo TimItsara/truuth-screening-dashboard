@@ -2,12 +2,13 @@ interface DemoToolbarProps {
   isBusy: boolean;
   onSeed: () => void;
   onRun: () => void;
+  onRunSingle: () => void;
   onSchedule: () => void;
   onWebhook: () => void;
   onReset: () => void;
 }
 
-export function DemoToolbar({ isBusy, onSeed, onRun, onSchedule, onWebhook, onReset }: DemoToolbarProps) {
+export function DemoToolbar({ isBusy, onSeed, onRun, onRunSingle, onSchedule, onWebhook, onReset }: DemoToolbarProps) {
   return (
     <div className="toolbar">
       <button className="btn primary" type="button" onClick={onSeed} disabled={isBusy}>
@@ -15,6 +16,9 @@ export function DemoToolbar({ isBusy, onSeed, onRun, onSchedule, onWebhook, onRe
       </button>
       <button className="btn accent" type="button" onClick={onRun} disabled={isBusy}>
         Run Screening
+      </button>
+      <button className="btn" type="button" onClick={onRunSingle} disabled={isBusy}>
+        Run Single Test
       </button>
       <button className="btn" type="button" onClick={onSchedule} disabled={isBusy}>
         Trigger Schedule

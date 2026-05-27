@@ -1,4 +1,12 @@
-import type { Candidate, DashboardRun, ReviewAction, ScreeningResult, TaskRun, VendorExecution } from "../api/types";
+import type {
+  Candidate,
+  DashboardRun,
+  ReviewAction,
+  ScreeningResult,
+  TaskRun,
+  VendorConfig,
+  VendorExecution,
+} from "../api/types";
 import { AlertDetail } from "./AlertDetail";
 import { OpsPanel } from "./OpsPanel";
 import { ResultsList } from "./ResultsList";
@@ -11,10 +19,12 @@ interface ViewProps {
   candidates: Candidate[];
   dashboard: DashboardRun | null;
   selectedResult: ScreeningResult | null;
+  vendors: VendorConfig[];
   vendorExecutions: VendorExecution[];
   tasks: TaskRun[];
   onSelectResult: (result: ScreeningResult) => void;
   onRunScreening: () => void;
+  onRunSingleTest: () => void;
   onSeed: () => void;
   onSchedule: () => void;
   onWebhook: () => void;
@@ -51,14 +61,14 @@ export function ActiveView(props: ViewProps) {
         />
       );
     case "providers":
-      return <ProvidersView vendorExecutions={props.vendorExecutions} />;
+      return <ProvidersView vendors={props.vendors} vendorExecutions={props.vendorExecutions} />;
     case "review":
     default:
       return <ReviewView {...props} />;
   }
 }
 
-function HomeView({ dashboard, candidates, onSeed, onRunScreening }: ViewProps) {
+function HomeView({ dashboard, candidates, onSeed, onRunScreening, onRunSingleTest }: ViewProps) {
   return (
     <div className="dashboard-grid">
       <section className="stack">
@@ -66,11 +76,12 @@ function HomeView({ dashboard, candidates, onSeed, onRunScreening }: ViewProps) 
           <div className="eyebrow">Overview</div>
           <h2 className="detail-title">Screening Demo Control Room</h2>
           <p className="subject-meta">
-            Use this app to seed subjects, run mock vendor screening, and inspect normalized results from Truuth Worker.
+            Use this app to seed subjects, test one subject against configured providers, and inspect normalized results from Truuth Worker.
           </p>
           <div className="toolbar" style={{ marginTop: 16 }}>
             <button className="btn primary" type="button" onClick={onSeed}>Seed Data</button>
             <button className="btn accent" type="button" onClick={onRunScreening}>Run Screening</button>
+            <button className="btn" type="button" onClick={onRunSingleTest}>Run Single Test</button>
           </div>
         </div>
         <div className="card detail-card">
@@ -215,21 +226,37 @@ function ReportsView({
   );
 }
 
-function ProvidersView({ vendorExecutions }: { vendorExecutions: VendorExecution[] }) {
-  const vendors = ["mock_adverse_media", "mock_pep_sanctions"];
+function ProvidersView({
+  vendors,
+  vendorExecutions,
+}: {
+  vendors: VendorConfig[];
+  vendorExecutions: VendorExecution[];
+}) {
+  const configuredVendors =
+    vendors.length > 0
+      ? vendors
+      : [
+          { name: "mock_adverse_media", screening_type: "adverse_media", mode: "mock" },
+          { name: "mock_pep_sanctions", screening_type: "pep_sanctions", mode: "mock" },
+        ];
   return (
     <div className="card">
       <div className="panel-header">
         <h3 className="panel-title">Provider Config</h3>
-        <span className="muted">Mock adapters</span>
+        <span className="muted">Configured adapters</span>
       </div>
-      {vendors.map((vendor) => (
-        <div className="result-row" key={vendor}>
+      {configuredVendors.map((vendor) => (
+        <div className="result-row" key={vendor.name}>
           <div>
-            <div className="row-title">{vendor}</div>
-            <div className="row-meta">Vendor-agnostic adapter · mock mode · no real credentials</div>
+            <div className="row-title">{vendor.name}</div>
+            <div className="row-meta">
+              {vendor.screening_type} · {vendor.mode === "live" ? "live API" : "mock adapter"}
+            </div>
           </div>
-          <span className="badge">{vendorExecutions.filter((item) => item.vendor === vendor).length} executions</span>
+          <span className="badge">
+            {vendor.mode} · {vendorExecutions.filter((item) => item.vendor === vendor.name).length} executions
+          </span>
         </div>
       ))}
     </div>
