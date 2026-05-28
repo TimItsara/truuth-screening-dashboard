@@ -47,6 +47,7 @@ export function App() {
     () => combineDashboards(dashboardHistory, candidates),
     [dashboardHistory, candidates],
   );
+  const pageContent = getPageContent(activeView);
 
   function updateStatus(message: string, tone: StatusTone = "default") {
     setStatus({ message, tone });
@@ -286,11 +287,11 @@ export function App() {
           <div className="page-header">
             <div>
               <h1 className="page-title">
-                {DEMO_MODE ? "Resume Screening" : "Adverse Media, PEP & Sanctions Review"}
+                {DEMO_MODE ? pageContent.title : "Adverse Media, PEP & Sanctions Review"}
               </h1>
               <p className="page-copy">
                 {DEMO_MODE
-                  ? "Upload a PDF resume, extract a candidate profile, run vendor checks, and inspect evidence."
+                  ? pageContent.copy
                   : "Run a demo screening flow and inspect normalized alerts from Truuth Worker."}
               </p>
             </div>
@@ -344,6 +345,31 @@ export function App() {
       </footer>
     </div>
   );
+}
+
+function getPageContent(view: AppView): { title: string; copy: string } {
+  if (view === "resume") {
+    return {
+      title: "Resume Intake",
+      copy: "Upload a PDF resume, extract a normalized candidate profile, and prepare it for vendor checks.",
+    };
+  }
+  if (view === "review") {
+    return {
+      title: "Screening Results",
+      copy: "Review normalized sanctions, PEP, and adverse media outcomes across the latest stored checks.",
+    };
+  }
+  if (view === "reports") {
+    return {
+      title: "Vendor Evidence",
+      copy: "Inspect archived provider calls, endpoints, HTTP status, and redacted request/response evidence.",
+    };
+  }
+  return {
+    title: "Resume Screening",
+    copy: "Upload a PDF resume, extract a candidate profile, run vendor checks, and inspect evidence.",
+  };
 }
 
 function mergeCandidates(current: Candidate[], additions: Candidate[]): Candidate[] {
